@@ -28,15 +28,6 @@
 /story-outline-assistant
 ```
 
-## 忽略的目录
-
-以下目录保留在本地但**不受版本控制**：
-
-| 目录 | 说明 |
-|------|------|
-| `skill-creator/` | 第三方 skill，非本人创作 |
-| `oc-creation-assistant-workspace/` | OC 创作助手的评测/工作数据 |
-
 ## 使用方式
 
 在 Claude Code 对话中直接输入 `/<skill-name>` 调用。
