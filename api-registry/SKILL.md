@@ -28,9 +28,8 @@ AI 天然倾向使用训练数据中的标准库 API（`os.time()`、`string.spl
 
 | 变量 | 说明 |
 |------|------|
-| `CLAUDE_PLUGIN_ROOT` | ai-coding 插件根目录 |
-| `PROJECT_LUA_DIR` | Lua 代码根目录 |
-| `REGISTRY_DIR` | `${PROJECT_LUA_DIR}/.record/api-registry/` |
+| `PROJECT_SRC_DIR` | 项目源码根目录（语言/框架无关，由环境提供或项目适配配置提供） |
+| `REGISTRY_DIR` | `${PROJECT_SRC_DIR}/.record/api-registry/` |
 
 > **注意**：数据存储在项目目录 `.record/api-registry/` 下，不在 plugin/skill 目录下。
 > 这样 skill 本身可以上传 GitHub（无敏感信息），而 API 注册表数据绑定项目、不出仓库。
@@ -40,7 +39,7 @@ AI 天然倾向使用训练数据中的标准库 API（`os.time()`、`string.spl
 ## 数据目录结构
 
 ```
-${PROJECT_LUA_DIR}/.record/api-registry/
+${PROJECT_SRC_DIR}/.record/api-registry/
 ├── _index.md              # 分类路由表（手动维护）
 ├── _flat_index.md          # 脚本自动生成，一行一个 API
 ├── time.md                 # 时间相关
@@ -103,7 +102,7 @@ ${PROJECT_LUA_DIR}/.record/api-registry/
 
 ## 检索流程（省 token 模式）
 
-和 lua-code-explorer 知识库采用相同的索引路由策略：
+和通用知识库检索采用相同的索引路由策略：
 
 ```
 1. Read _flat_index.md（一行一个 API，全部叶子条目）
@@ -141,7 +140,7 @@ research skill 调研结束后，如果发现了未收录的 API，会提示用�
 4. **更新 _index.md**：如果新增了分类文件，在索引表中追加一行
 5. **重建 _flat_index.md**：
    ```bash
-   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/build-api-flat-index.py" --root "${REGISTRY_DIR}"
+   python3 "${CLAUDE_SKILL_DIR}/scripts/build-api-flat-index.py" --root "${REGISTRY_DIR}"
    ```
    如果该脚本尚未创建（首次使用），则手动在 `_flat_index.md` 尾部追加一行：
    ```

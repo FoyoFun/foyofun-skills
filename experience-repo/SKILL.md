@@ -32,20 +32,20 @@ AI 在代码架构上的判断（耦合/内聚/可读性/可维护性/拓展性/
 
 | 变量 | 说明 |
 |------|------|
-| `CLAUDE_PLUGIN_ROOT` | ai-coding 插件根目录 |
-| `PROJECT_LUA_DIR` | Lua 代码根目录 |
-| `PERSONAL_EXP_DIR` | `${CLAUDE_PLUGIN_ROOT}/experiences/personal/` |
-| `PROJECT_EXP_DIR` | `${PROJECT_LUA_DIR}/.record/experiences/project/` |
+| `PROJECT_SRC_DIR` | 项目源码根目录（语言/框架无关） |
+| `PERSONAL_EXP_DIR` | `${HOME}/.claude/experiences/personal/`（AI 运行时用 `echo $HOME` 解析为绝对路径） |
+| `PROJECT_EXP_DIR` | `${PROJECT_SRC_DIR}/.record/experiences/project/` |
 
-> **安全设计**：项目经验存在 `.record/` 下，不上传 GitHub。个人经验在插件目录下，
-> 用户自行决定是否上传。skill 文件本身不含任何经验数据，可安全上传。
+> **安全设计**：项目经验存在 `.record/` 下，不上传 GitHub。个人经验存在用户主目录
+> `~/.claude/experiences/personal/` 下，用户自行决定是否上传。
+> skill 文件本身不含任何经验数据，可安全上传。
 
 ---
 
 ## 数据目录结构
 
 ```
-个人经验（${CLAUDE_PLUGIN_ROOT}/experiences/personal/）：
+个人经验（${HOME}/.claude/experiences/personal/）：
 ├── _index.md              # 分类索引
 ├── naming.md              # 变量/函数命名偏好
 ├── traversal.md           # 遍历：何时合并/分离
@@ -55,7 +55,7 @@ AI 在代码架构上的判断（耦合/内聚/可读性/可维护性/拓展性/
 ├── interface-design.md    # 接口设计原则
 └── ...
 
-项目经验（${PROJECT_LUA_DIR}/.record/experiences/project/）：
+项目经验（${PROJECT_SRC_DIR}/.record/experiences/project/）：
 ├── _index.md
 ├── module-patterns.md     # 项目特有的模块组织方式
 ├── protocol-handling.md   # 协议处理约定
@@ -213,8 +213,8 @@ logic-dev / ui-dev / code-refactor / quick-fix 在实现阶段应：
    - 不推荐做法是什么？（用户觉得不好的代码）
    - 原因是什么？（为什么这样做更好）
 2. **选择存储位置**：
-   - 通用偏好（跨项目适用）→ 个人经验 `${CLAUDE_PLUGIN_ROOT}/experiences/personal/`
-   - 项目特有约定（只在这个项目适用）→ 项目经验 `${PROJECT_LUA_DIR}/.record/experiences/project/`
+   - 通用偏好（跨项目适用）→ 个人经验 `${HOME}/.claude/experiences/personal/`
+   - 项目特有约定（只在这个项目适用）→ 项目经验 `${PROJECT_SRC_DIR}/.record/experiences/project/`
    - 不确定时默认放个人经验，同时告知用户
 3. **判定分类**：naming / traversal / abstraction / cross-cutting / logging / interface-design / ...
 4. **检查重复**：Read 目标分类文件，确认没有完全相同的经验。如果有相似但不完全相同的 → 追加为新的经验条目

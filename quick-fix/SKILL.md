@@ -58,8 +58,7 @@ quick-fix 是 logic-dev / ui-dev / code-refactor 的降级版：
 
 | 变量 | 说明 |
 |------|------|
-| `CLAUDE_PLUGIN_ROOT` | ai-coding 插件根目录 |
-| `PROJECT_LUA_DIR` | Lua 代码根目录 |
+| `PROJECT_SRC_DIR` | 项目源码根目录（语言/框架无关） |
 
 ---
 

@@ -52,8 +52,7 @@ UI 层是玩家能直接感知的层——它调用 logic 层接口获取数据�
 
 | 变量 | 说明 |
 |------|------|
-| `CLAUDE_PLUGIN_ROOT` | ai-coding 插件根目录 |
-| `PROJECT_LUA_DIR` | Lua 代码根目录 |
+| `PROJECT_SRC_DIR` | 项目源码根目录（语言/框架无关） |
 
 ---
 
@@ -97,9 +96,51 @@ UI 层是玩家能直接感知的层——它调用 logic 层接口获取数据�
 - **数据来源**：调用哪个 logic 接口获取数据
 - **交互流程**：用户点击 → 触发了什么
 
-### 阶段 5：用户确认 + 实现
+### 阶段 4.5：Stub（接口骨架）—— Plan 之后、实现之前
 
-**控件绑定规范**：
+Plan 确认后，**不要立即写实现代码**。先在目标 UI 文件中写入接口骨架——消除你和用户之间对 UI 交互理解的分歧。
+
+**Stub 包含三样东西**：
+1. **函数签名 + LDoc 注解**（`---@param`、`---@return`）
+2. **TODO 步骤注释**（描述每个控件操作步骤，不写具体 API 调用）
+3. **数据流注释**（函数顶部 1-2 行："数据从哪个 logic 接口来 → 绑定到哪些控件 → 响应用户什么操作"）
+
+**格式示例**：
+```lua
+-- 数据流: logic_team:GetMemberList() → LoopScrollGrid → 每项响应 OnClick
+---@param memberList table 成员列表
+---@return void
+function TeamMember_UIBP:RefreshMemberList(memberList)
+    -- TODO: 清空 LoopScrollGrid 已有数据
+    -- TODO: 遍历 memberList，逐项 SetItemData
+    -- TODO: 设置空列表占位提示的可见性
+end
+
+-- 数据流: 用户点击邀请按钮 → logic_team:SendInvite(uid) → 按钮置灰 + 倒计时
+---@param uid number 被邀请玩家UID
+---@return void
+function TeamMember_UIBP:OnClickInvite(uid)
+    -- TODO: 检查冷却时间是否结束
+    -- TODO: 调用 logic_team:SendInvite(uid)
+    -- TODO: 按钮设为不可点击
+    -- TODO: 启动 3 秒倒计时后恢复按钮状态
+end
+```
+
+**Stub 约束**：
+- 只有 ≥2 个地方调用的 UI 逻辑才新建函数。一次性使用的逻辑用 `-- TODO: xxx` 内联在按钮回调中
+- 不要写具体控件 API 调用（`self.Button:SetEnable(false)` 太早——可能你用 `SetButtonEnable` 而非 `SetEnable`）
+- 不要为了"让 Stub 清晰"而把简单 UI 刷新拆成多个函数
+
+**写入文件**：
+Stub 直接写入目标 UI 文件。用户可以选择：
+- ✅ 确认 Stub → 进入阶段 5 实现
+- ✏️ 指出交互流程有误 → 回到阶段 4 修正 Plan
+- 🛑 在此停下 → 用户自己按控件清单和 TODO 注释手动实现
+
+### 阶段 5：实现
+
+用户确认 Stub 后，按 TODO 注释逐条填充控件操作代码。
 - 在 `OnPostInitialize` 中集中完成控件变量赋值
 - 控件变量名通常与蓝图中的控件名一致
 

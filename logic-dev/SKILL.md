@@ -48,8 +48,7 @@ description: >-
 
 | 变量 | 说明 |
 |------|------|
-| `CLAUDE_PLUGIN_ROOT` | ai-coding 插件根目录 |
-| `PROJECT_LUA_DIR` | Lua 代码根目录 |
+| `PROJECT_SRC_DIR` | 项目源码根目录（语言/框架无关） |
 
 ---
 
@@ -79,8 +78,8 @@ description: >-
 ### 阶段 3：加载经验库
 
 ```
-1. Read 个人经验 _index.md（${CLAUDE_PLUGIN_ROOT}/experiences/personal/_index.md）
-2. Read 项目经验 _index.md（${PROJECT_LUA_DIR}/.record/experiences/project/_index.md）
+1. Read 个人经验 _index.md（${HOME}/.claude/experiences/personal/_index.md，用 `echo $HOME` 解析）
+2. Read 项目经验 _index.md（${PROJECT_SRC_DIR}/.record/experiences/project/_index.md）
 3. 根据当前任务语义匹配相关分类
 4. Read 相关分类文件中的经验条目
 ```
@@ -91,9 +90,53 @@ description: >-
 
 如果用户提供了函数骨架（LDoc + 步骤注释），直接在方案中说明"按用户骨架填充实现"，跳到阶段 5。
 
-### 阶段 5：用户确认 + 实现
+### 阶段 4.5：Stub（接口骨架）—— Plan 之后、实现之前
 
-用户确认方案后，开始实现。实现过程中：
+Plan 确认后，**不要立即写实现代码**。先在目标文件中写入接口骨架——消除你和用户之间对 Plan 理解的歧义。
+
+**Stub 包含三样东西**：
+1. **函数签名 + LDoc 注解**（`---@param`、`---@return`、`---@type`）
+2. **TODO 步骤注释**（用 `-- TODO:` 描述每个步骤要做什么，不写具体实现）
+3. **数据流注释**（函数顶部 1-2 行，描述"数据从哪来 → 经过什么处理 → 到哪去"）
+
+**格式示例**：
+```lua
+-- 数据流: RPC GetInfoReq → Handler.on_GetInfoRsp → self.dataCache → 本接口
+---@param uid number 玩家UID
+---@return table|nil { level, exp, vipLevel }
+function PlayerData:GetPlayerSummary(uid)
+    -- TODO: 从 self.dataCache[uid] 获取基础数据
+    -- TODO: 如果缓存未命中，返回 nil（调用方需处理）
+    -- TODO: 补充 lastLoginTime 字段（当前缓存中缺少）
+end
+
+-- 数据流: 定时器 → 检查缓存时效 → 按需发 RPC → 更新缓存
+---@return void
+function PlayerData:RefreshIfExpired(uid)
+    -- TODO: 判断 self.dataCache[uid].updateTime 距现在是否 > TTL
+    -- TODO: 过期则发 GetInfoReq，在回调中更新缓存
+    -- TODO: 未过期则跳过
+end
+```
+
+**Stub 约束**：
+- 只有 ≥2 个调用方使用的逻辑才新建函数签名。单调用方的逻辑用 `-- TODO: xxx` 内联在已有函数中
+- 不要写任何实现代码——哪怕一行 `if not data then return nil end` 也太早
+- 不要为了"让 Stub 更清晰"而新增不必要的接口——宁可在一处多写两行 TODO，也不要拆成三个函数
+
+**写入文件**：
+Stub 直接写入目标代码文件（非临时文件）。这样用户可以选择：
+- ✅ 确认 Stub → 进入阶段 5 实现
+- ✏️ 指出理解有误 → 回到阶段 4 修正 Plan，再重新输出 Stub
+- 🛑 在此停下 → 用户自己按 Stub 中的接口和 TODO 注释手动实现
+
+**歧义处理**：
+如果用户说"不对，XX 不应该在这里"，不要辩解。先理解用户为什么觉得不对——
+是 Plan 本身有问题（回到阶段 4 修正），还是 Stub 的表达方式有误导（调整 Stub 即可）。
+
+### 阶段 5：实现
+
+用户确认 Stub 后，按 TODO 注释逐条填充实现。
 
 **每写一个 API 调用前**：
 1. 先在 api-registry 的 `_flat_index.md` 中检查是否有项目封装
@@ -114,11 +157,15 @@ description: >-
   c. 新逻辑与现有接口关注点完全不同
 - 如果只是加 ≤10 行逻辑，直接改现有接口
 
-**切面意识**：
-每个函数写完后自问：
-1. 这个函数的每一行是否属于同一个"关注点"？
-2. 有没有调用让维护者需要跳到另一个文件才能理解的逻辑？
-3. 如果有，能否把它提升到调用方，让本函数只做一件事？
+**切面原则**（详见 experience-repo → cross-cutting.md）：
+接口按职责分为三类：
+- **原子接口**：职责单一，最小不可拆分（如 `Clean()`、`IsInLobby()`）
+- **门面接口**：供外部调用，内部做好兜底，让调用方省心（门面可以嵌套原子）
+- **编排接口**：内部流程，平级调用，让维护者看清完整生命周期
+
+写每个函数前先问：它是给外部调用的门面，还是内部编排的一环？
+- 门面 → 内部可嵌套原子，调用方无需关心细节
+- 编排 → 同级调用不嵌套，维护者一眼看清生命周期
 
 ### 阶段 6：自检（调用 change-review）
 

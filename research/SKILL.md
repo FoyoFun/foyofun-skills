@@ -13,7 +13,7 @@ description: >-
 
 ## 设计背景
 
-在 3 万+ Lua 文件的大型项目中，开发前最常见的两个问题是：
+在大型项目中，开发前最常见的两个问题是：
 1. **重复造轮子**——不知道已有类似功能，写了一遍又一遍
 2. **理解错误**——凭印象理解现有模块，改的时候才发现和想的不一样
 
@@ -27,9 +27,8 @@ description: >-
 
 | 变量 | 说明 |
 |------|------|
-| `CLAUDE_PLUGIN_ROOT` | ai-coding 插件根目录 |
-| `PROJECT_LUA_DIR` | Lua 代码根目录 |
-| `RESEARCH_CACHE_DIR` | `${PROJECT_LUA_DIR}/.record/research-cache/` |
+| `PROJECT_SRC_DIR` | 项目源码根目录（语言/框架无关，由环境提供或项目适配配置提供） |
+| `RESEARCH_CACHE_DIR` | `${PROJECT_SRC_DIR}/.record/research-cache/` |
 
 ---
 
@@ -95,19 +94,19 @@ TTL 动态设定：
 遵循三层检索，避免直接逐文件 Read：
 
 ```
-1. 查 API 注册表 _flat_index.md（${PROJECT_LUA_DIR}/.record/api-registry/_flat_index.md）
+1. 查 API 注册表 _flat_index.md（${PROJECT_SRC_DIR}/.record/api-registry/_flat_index.md）
    → 确认哪些接口已收录（~500-2000 tokens）
-2. 查项目知识库 _flat_index.md（${CLAUDE_PLUGIN_ROOT}/knowledge/_flat_index.md）
+2. 查项目知识库 _flat_index.md（如项目配置了知识库）
    → 看目标模块是否已有文档
 3. 知识库命中 → 读对应 _toc.md → 分段读正文
-4. 知识库未命中 → 调用 lua-code-explorer 子 Agent 去代码中搜索
+4. 知识库未命中 → 调用项目可用的代码探索工具去代码中搜索
 ```
 
-代码搜索一律下沉到 `lua-code-explorer` 子 Agent，主流程只做编排和合并。
+代码搜索一律下沉到子 Agent 或 Grep 工具，主流程只做编排和合并。
 
 ### 步骤 3：执行调研
 
-调用 `lua-code-explorer` 子 Agent，按合格线清单逐项收集信息。
+调用项目可用的代码搜索子 Agent（如 lua-code-explorer 或通用 code-explorer），按合格线清单逐项收集信息。
 
 子 Agent prompt 模板：
 
@@ -118,14 +117,13 @@ TTL 动态设定：
 ## 要求
 1. 找到目标模块的主要文件
 2. 确认是否已有类似功能
-3. 列出需要调用的已有接口（重点：区分项目封装接口 vs Lua 标准库接口）
+3. 列出需要调用的已有接口（重点：区分项目封装接口 vs 语言标准库接口）
 4. 识别数据来源（协议 / 配置表 / 本地计算）
 5. 如有余力：追踪主数据流、提取模块编码风格、找相似实现参考
 
 ## 参数
 keywords: {关键词数组}
-docs_dir: {CLAUDE_PLUGIN_ROOT}/knowledge
-lua_root: {PROJECT_LUA_DIR}
+project_root: {PROJECT_SRC_DIR}
 ```
 
 ### 步骤 4：写缓存
@@ -186,7 +184,7 @@ related_modules: [关联模块名]
 ## 关键原则
 
 1. **先查缓存，再调研**——节省 token 的第一步
-2. **用 lua-code-explorer 子 Agent 搜索代码**——主流程不直接 Read/Grep
+2. **用代码搜索子 Agent 搜索代码**——主流程不直接逐文件 Read/Grep
 3. **调研合格线必须全部打勾**——4 条缺一不可
 4. **不过度调研**——只追主干，不通读所有文件
 5. **TTL + Git 双重失效检查**——平衡时效性和效率
@@ -199,5 +197,5 @@ related_modules: [关联模块名]
 |-------|------|
 | api-registry | 调研结论中的新 API 候选可写入 api-registry |
 | module-style | 调研结论中的"模块风格摘要"供 module-style 进一步细化 |
-| lua-code-explorer | 代码搜索下沉到此子 Agent |
+| 代码搜索工具 | Grep/子 Agent 做实际代码搜索，主流程只编排 |
 | logic-dev / ui-dev / code-refactor / quick-fix | 这些 skill 执行前**必须**先走 research |
