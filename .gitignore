@@ -1,4 +1,4 @@
-skill-creator/
-find-skills/
 __pycache__/
-oc-creation-assistant-workspace/
+*.pyc
+.DS_Store
+Thumbs.db

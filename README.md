@@ -1,83 +1,114 @@
-# Foyofun Skills
+# foyofun-code-* 编码技能集
 
-可复用的 AI Skill 集合——涵盖创意写作与游戏客户端开发两大领域。每个 skill 是一个独立目录，将 `SKILL.md` 作为系统提示词提供给 AI 即可使用。
+个人编码工作流技能集。`foyofun` = 开发者，`code` = 用途分类。
+设计目标：**通用思想，语言无关**（工作项目 Lua/UE 与个人项目 C#/C++ 均适用），
+项目相关细节全部收敛到每个项目的适配表里。
 
----
-
-## 🎮 编码开发 Skills（UE4+Lua 游戏客户端）
-
-专为大型 UE4+Lua 游戏项目设计的编码 Skill 体系，按四层架构组织：
-
-### 架构总览
+## 技能清单与调用关系
 
 ```
-用户请求
-    │
-    ├─ 调研 ──→ research（Layer 0：调研缓存，避免重复搜索）
-    │
-    ├─ 检索 ──→ api-registry / experience-repo / module-style（Layer 1：只读检索）
-    │
-    ├─ 输出 ──→ plan-output / change-review（Layer 2：方案输出 & 代码审查）
-    │
-    └─ 执行 ──→ logic-dev / ui-dev / code-refactor / quick-fix（Layer 3：面向用户）
+                      ┌─────────────────────────────────────────┐
+                      │            执行者（入口）                 │
+                      │                                         │
+ 用户诉求 ──────────▶ │  logic    ui    integrate   refactor    │ ──▶ review（收尾自检）
+                      │                                      ✅  │      ▲（也可独立调用）
+                      └───────┬──────────────────┬─────────────────┘
+                              │ 按阶段调用        │ 集成消费
+                              ▼                  ▼
+                      ┌─────────────────────────────────────────┐
+                      │                支撑件                    │
+                      │                                         │
+                      │  research  style  experience  api       │
+                      │  （调研）  （风格） （经验库）  （API查询）│
+                      │                                         │
+                      │  plan（方案模板）  stub（骨架+标记规范）   │
+                      └─────────────────────────────────────────┘
 ```
 
-### Layer 0：调研基础
+| 技能 | 角色 | 一句话职责 |
+|------|------|-----------|
+| foyofun-code-research | 支撑 | 调研已有功能与数据源，项目首次使用时初始化 .agents 基础设施 |
+| foyofun-code-style | 支撑 | 已有模块的风格提取，让新代码入乡随俗 |
+| foyofun-code-experience | 支撑 | 正反例经验库（个人/项目两层），记录用户编码偏好 |
+| foyofun-code-api | 支撑 | 项目 API 查询与积累，禁止绕过项目封装 |
+| foyofun-code-plan | 支撑 | 方案模板：数据源/时序/新增逻辑/不确定点（禁止猜测） |
+| foyofun-code-stub | 支撑 | 骨架生成（自足性标准）+ `[SEAM]`/`[MOCK]`/`[TODO]` 标记规范 |
+| foyofun-code-logic | 执行 | logic 层开发，假数据闭环自测 |
+| foyofun-code-ui | 执行 | ui 层开发，内部交互闭环自测 |
+| foyofun-code-integrate | 执行 | ui/logic 集成装配，只增不改 |
+| foyofun-code-refactor | 执行 | 行为不变的结构优化 |
+| foyofun-code-review | 执行 | diff 审查四维度，可独立调用 |
 
-| Skill | 说明 | 触发词 |
-|-------|------|--------|
-| `research` | 项目代码调研，缓存+Git 失效检查，f/g/h/i 的强制前置步骤 | 调研、研究一下、看看现有代码、先看看、摸底 |
+## 核心思想（贯穿全套）
 
-### Layer 1：检索 & 知识库
+1. **反投机**——不预埋接口、不过早缓存、不提前抽象、不做储备性调研
+2. **闭环先行**——ui/logic 各自独立闭环开发，假数据自测；集成期只增不改
+3. **契约显式化**——跨层对接 = 快照形状 + 意图清单 + 事件清单 + 时序归属
+4. **不猜测**——不确定点列出来等用户回答，方案里的每个事实都来自调研
+5. **人机共读**——经验库、API 积累、适配表全是 .md，用户随时直接编辑
+6. **注册注销成对、异步必须防御**——无论框架是否兜底
 
-| Skill | 说明 | 触发词 |
-|-------|------|--------|
-| `api-registry` | API 注册表——保存和检索项目封装接口，避免 AI 使用标准库而非项目封装 | 查接口、有没有封装、怎么调用、收录接口 |
-| `experience-repo` | 经验库——正反例对比记录编码偏好，支持读写双向 | 记住、记一下、以后这样写、不要这样写 |
-| `module-style` | 模块风格分析——在已有模块上开发时先分析其编码习惯 | 内部调用，分析这个模块的风格 |
+## 三种标记（stub 定义，全体系通用）
 
-### Layer 2：输出 & 质检
+| 标记 | 含义 | 消除时机 |
+|------|------|---------|
+| `-- TODO:` | 实现步骤 | 实现完成 |
+| `-- [SEAM]` | 跨层契约桩 | integrate 填充/绑定后 |
+| `-- [MOCK]` | 闭环假数据点 | integrate 换真源后 |
 
-| Skill | 说明 | 触发词 |
-|-------|------|--------|
-| `plan-output` | 方案输出模板——为 logic-dev/ui-dev/code-refactor 提供统一的 Plan 格式 | 内部引用 |
-| `change-review` | 代码审查——只审 git diff，关注阻塞项/逻辑错误/日志/API 选择 | review、审查代码、检查一下、code review |
+## 新项目接入（约 5 分钟）
 
-### Layer 3：执行（面向用户）
+1. 在项目里随便发起一次编码任务（或直接说"调研一下 XX"），
+   research 会自动创建 `<project>/.agents/` 并生成下面三样骨架
+2. 填写**项目适配表**（模板见下），这是唯一必须人工做的步骤
+3. 可选：把已知的项目 API 收录进 `api/`，把已知偏好记入 `experiences/`
+   （也可以不预填，用着让 skill 逐步积累）
 
-| Skill | 说明 | 触发词 |
-|-------|------|--------|
-| `logic-dev` | 业务逻辑层开发——数据流、数据处理、协议、接口设计、时序控制 | 开发 logic、实现功能、写一个模块、数据管理 |
-| `ui-dev` | UI 界面开发——控件绑定、交互逻辑、数据刷新、异步防御 | 做界面、写 UI、UIBP、弹窗、按钮、列表项 |
-| `code-refactor` | 代码重构——改结构不改行为，多方案选择+经验驱动 | 重构、整理代码、优化结构、拆分、职责不清 |
-| `quick-fix` | 快速修复——≤30 行小改动，TODO 清理、小 bug 修复、日志补充 | 修复、改一下、TODO 做一下、这里有个小问题 |
+## 项目适配表模板（`<project>/.agents/adaptation.md`）
 
-### 设计原则
+```markdown
+# 项目适配表
+> 所有 foyofun-code-* skill 执行前都会参考本表。框架差异都写在这里，skill 正文保持通用。
 
-- **职责单一**：每个 Skill 只做一件事，logic-dev 不写 UI，ui-dev 不处理业务规则
-- **数据与 Skill 分离**：Skill 文件是通用指令（可上传 GitHub），API 注册表/经验库/调研缓存等数据存储在项目的 `.record/` 目录下
-- **正反例替代抽象描述**：经验库用 `✅ 推荐` / `❌ 不推荐` 的代码示例而非抽象规则
-- **默认在现有接口中修改**：如非必要勿增实体，新增接口需要满足明确条件
-- **调研缓存**：TTL + Git 变更双重失效检查，避免重复搜索浪费 token
-- **索引路由**：`_flat_index → _toc → 分段 Read` 的三层检索策略，大幅节省 token
+## 基本信息
+- 语言/引擎：
+- 源码根目录：
 
-### 使用方式
+## UI 框架
+- 生命周期方法（对应 ctor/初始化/注册/OnShow/OnClose 的真实方法名）：
+- 控件获取与绑定方式：
+- 事件注册/注销 API：
+- **注销是否框架兜底**（不兜底 = 必须手写成对注销）：
+- 定时器 API：
 
-将对应 skill 目录放入 AI 工具的 skills 路径下即可。Skill 文件使用 `${PROJECT_LUA_DIR}`、`${CLAUDE_PLUGIN_ROOT}` 等环境变量引用路径，不依赖特定项目目录结构。
+## logic 层
+- 模块管理器（获取其他模块的方式）：
+- 协议发送/接收惯例（命名风格、handler 形态）：
+- 事件系统 API（PostEvent/RegisterEvent 的真实形态）：
 
----
+## 日志
+- 日志函数与格式：
 
-## ✍️ 创意写作 Skills
+## 已知项目封装分类（供 foyofun-code-api 定向查询）
+- 如：TimeUtil（时间）、StringUtil（字符串）、...
 
-| Skill | 说明 |
-|-------|------|
-| `oc-creation-assistant` | 引导用户一步步创作原创角色（OC）。从零开始或基于碎片想法，通过问答构建角色设定、性格、背景故事 |
-| `sillytavern-character-card` | 将角色设定转化为 SillyTavern 格式的角色卡（Character Card），生成可导入 ST 的 JSON/PNG 文件 |
-| `sillytavern-prompt-generator` | 创建完整的 SillyTavern 预设（Prompt/Preset），调整 AI 回复风格、长度、温度等参数 |
-| `story-outline-assistant` | 引导用户在缺乏灵感时完成故事大纲创作，梳理碎片想法、发展情节、发现故事核心意义 |
+## 其他
+- 配置表读取方式：
+- 特殊约束：
+```
 
----
+## 模型分层使用建议
 
-## 许可
+- **Pro 级模型**：出 Plan（plan）和骨架（stub）——这两个阶段做决策、需要调研整合能力
+- **Flash 级模型**：照骨架填实现——stub 的自足性标准保证弱模型无需调研即可翻译注释为代码
+- 切换方式：骨架确认后换模型，指其"按 foyofun-code-logic/ui 的骨架逐条 TODO 实现"
 
-MIT © 2026 foyofun
+## 数据文件总览
+
+| 位置 | 内容 |
+|------|------|
+| `~/.agents/skills/foyofun-code-*/` | 技能本体（跨工具共享：ZCode / Claude Code） |
+| `~/.agents/experiences/` | 个人经验（跨项目通用审美） |
+| `<project>/.agents/adaptation.md` | 项目适配表 |
+| `<project>/.agents/experiences/` | 项目经验 |
+| `<project>/.agents/api/` | 项目 API 积累 |
