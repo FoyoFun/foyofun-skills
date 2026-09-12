@@ -1,6 +1,7 @@
 # foyofun-code-* 编码技能集
 
-个人编码工作流技能集。`foyofun` = 开发者，`code` = 用途分类。
+个人技能集：主体是 foyofun-code-* 编码工作流，文末附其他技能。
+`foyofun` = 开发者，`code` = 用途分类。
 设计目标：**通用思想，语言无关**（任意语言/引擎均适用），
 项目相关细节全部收敛到每个项目的适配表里。
 
@@ -112,3 +113,9 @@
 | `<project>/.agents/adaptation.md` | 项目适配表 |
 | `<project>/.agents/experiences/` | 项目经验 |
 | `<project>/.agents/api/` | 项目 API 积累 |
+
+## 其他技能
+
+| 技能 | 一句话职责 |
+|------|-----------|
+| foyofun-qq-st-character-card | 角色卡创作引导：为 qq-st-bridge 桥接系统（NoneBot QQ 机器人 + SillyTavern 无头后端）对话式创建可直接部署的 chara_card_v3 角色卡（JSON + 人读 .md + 兴趣关键词 + 头像提醒）；铁律是示例对话必须为纯文字聊天记录体，零动作、零心理描写 |
