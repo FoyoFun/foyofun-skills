@@ -34,8 +34,14 @@ def build_segs(lines, names, before, after, chapter_full, skip_words):
         if l.startswith('#'):
             chap_title = l.lstrip('# ').strip() or chap_title
         chap_of.append(chap_title)
+    # 各章节的字符长度：skip 只对"短的真元信息节"生效，
+    # 避免书内标题稀疏时，陈旧标题（如卷首'简介'）把整卷命中误杀
+    chap_len = defaultdict(int)
+    for i, l in enumerate(lines):
+        chap_len[chap_of[i]] += len(l) + 1
     hit_lines = [i for i, l in enumerate(lines) if any(n in l for n in names)
-                 and not any(w in chap_of[i] for w in skip_words)]
+                 and not (any(w in chap_of[i] for w in skip_words)
+                          and chap_len[chap_of[i]] < 5000)]
     if not hit_lines:
         return None
     chap_hits = defaultdict(list)
